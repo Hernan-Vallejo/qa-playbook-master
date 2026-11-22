@@ -1,0 +1,21 @@
+# Configuración de lychee para el QA Playbook.
+# lychee es una herramienta que busca links rotos en los documentos.
+# Objetivo: validar SOLO links relativos entre documentos del repositorio.
+# Los links externos (cualquier http/https) se ignoran.
+
+# Modo offline: no hace requests de red, solo resuelve rutas locales.
+# Con offline activo, los links http/https no se chequean; igual se listan
+# los patrones externos en `exclude` para dejar la intención explícita.
+offline = true
+
+# No recorrer estas rutas (se comparan como expresiones regulares).
+exclude_path = [
+  "node_modules",  # dependencias instaladas
+  ".git",          # metadatos de git
+]
+
+# Exclusiones explícitas de links (expresiones regulares sobre la URL del link).
+exclude = [
+  "^https?://",    # cualquier link web
+  "^mailto:",      # links de correo
+]

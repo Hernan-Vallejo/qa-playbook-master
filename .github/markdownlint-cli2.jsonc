@@ -1,0 +1,35 @@
+{
+  // Configuración de markdownlint para el QA Playbook (archivo JSONC: JSON que admite comentarios).
+  //
+  // Criterio: el objetivo del CI es dar seguridad SIN hacer ruido.
+  // Por eso se desactiva TODO por defecto ("default": false) y se activan
+  // solo las pocas reglas que atrapan Markdown que rompe el render.
+  // Las reglas de estilo cosmético (espaciado de tablas, líneas en blanco
+  // alrededor de headings/listas, bloques sin lenguaje, URLs sin <>) NO se
+  // validan: son correctas de leer y bloquearlas frenaría al equipo sin motivo.
+  "config": {
+    // false = ninguna regla activa salvo las que se enumeran abajo.
+    "default": false,
+    // MD009: espacios al final de línea (pueden alterar saltos de línea).
+    "MD009": true,
+    // MD018 / MD019: falta / exceso de espacio tras el '#' de un heading
+    // (sin el espacio no renderiza como encabezado).
+    "MD018": true,
+    "MD019": true,
+    // MD023: los headings deben empezar al inicio de la línea.
+    "MD023": true,
+    // MD042: links sin destino (link vacío = link roto).
+    "MD042": true
+  },
+  // No lintear lo que no es documentación del equipo.
+  "ignores": [
+    // Dependencias instaladas (por ejemplo las de plantilla-automation/).
+    "**/node_modules/**",
+    // Metadatos de git.
+    ".git/**",
+    // Configuración de Kiro (agentes, skills y steering llevan formato propio con frontmatter).
+    ".kiro/**",
+    // El changelog tiene un formato propio.
+    "CHANGELOG.md"
+  ]
+}

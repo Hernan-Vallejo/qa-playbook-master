@@ -1,0 +1,121 @@
+# =============================================================================
+# QA Playbook - CI de validación de documentación (GitHub Actions)
+# =============================================================================
+# Para qué sirve: valida los documentos Markdown del playbook en cada Pull Request
+#                 hacia main. Si algún job falla, el PR no debería mergearse hasta
+#                 corregirlo (se recomienda marcar los 4 jobs como "required" en
+#                 Settings > Branches > Branch protection rules).
+#
+# Jobs:
+#   - markdownlint -> formato Markdown (markdownlint-cli2)
+#   - links        -> links relativos rotos entre documentos (lychee, modo offline)
+#   - naming       -> convención de nombres de archivos y carpetas (script propio)
+#   - secrets      -> credenciales o tokens filtrados (gitleaks)
+#
+# Los links externos (http/https) NO se validan: así el CI no depende de la red.
+# =============================================================================
+
+# Nombre que se ve en la pestaña "Actions" de GitHub.
+name: docs-lint
+
+# Cuándo se ejecuta el workflow.
+on:
+  # Solo en Pull Requests (PR) cuyo destino es la rama main.
+  pull_request:
+    branches: [main]
+
+# Permisos mínimos del token automático (GITHUB_TOKEN): solo lectura del código.
+permissions:
+  contents: read
+
+# Si se sube un commit nuevo al mismo PR, cancela la corrida anterior (ahorra tiempo).
+concurrency:
+  group: docs-lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Formato Markdown
+  # ---------------------------------------------------------------------------
+  markdownlint:
+    # Máquina virtual donde corre el job.
+    runs-on: ubuntu-latest
+    steps:
+      # Descarga el código del PR en la máquina del job.
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      # Instala Node.js (markdownlint-cli2 es una herramienta de Node).
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Instala la herramienta de forma global en la máquina del job.
+      - name: Instalar markdownlint-cli2
+        run: npm install -g markdownlint-cli2
+
+      # Revisa todos los .md con las reglas de .github/markdownlint-cli2.jsonc.
+      # Si encuentra un error, el comando devuelve código != 0 y el job falla.
+      - name: Revisar formato Markdown
+        run: markdownlint-cli2 --config .github/markdownlint-cli2.jsonc "**/*.md"
+
+  # ---------------------------------------------------------------------------
+  # 2. Links relativos entre documentos
+  # ---------------------------------------------------------------------------
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      # Acción oficial de lychee. La configuración (modo offline, sin links
+      # externos) vive en .github/lychee.toml.
+      - name: Validar links relativos con lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          # --config: archivo de configuración. --no-progress: salida limpia en el log.
+          # './**/*.md': revisa todos los Markdown del repositorio.
+          args: --config .github/lychee.toml --no-progress './**/*.md'
+          # true = si hay un link roto, el job falla (bloqueante).
+          fail: true
+
+  # ---------------------------------------------------------------------------
+  # 3. Convención de nombres de archivos y carpetas
+  # ---------------------------------------------------------------------------
+  naming:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      # El script usa bash (ya viene instalado en ubuntu-latest). Si encuentra
+      # una violación, sale con código 1 y el job falla.
+      - name: Chequear nombres
+        run: bash .github/check-naming.sh
+
+  # ---------------------------------------------------------------------------
+  # 4. Secretos o credenciales filtradas
+  # ---------------------------------------------------------------------------
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      # fetch-depth: 0 descarga TODO el historial de git, para que gitleaks
+      # también revise commits anteriores y no solo el último estado.
+      - name: Descargar el repositorio con todo el historial
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Se corre la imagen oficial de gitleaks con Docker (ya instalado en
+      # ubuntu-latest). Se evita la acción gitleaks-action porque en repositorios
+      # de organizaciones exige una licencia.
+      #   --source /repo : carpeta a revisar (el repositorio montado con -v).
+      #   --no-banner    : sin logo en el log.
+      #   --redact       : oculta el valor del secreto encontrado en el log.
+      #   --verbose      : muestra el detalle de cada hallazgo.
+      - name: Buscar secretos con gitleaks
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/repo" \
+            zricethezav/gitleaks:latest \
+            detect --source /repo --no-banner --redact --verbose

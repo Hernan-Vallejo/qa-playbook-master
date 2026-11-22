@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "QA - Inicio de sprint",
+      "trigger": "UserPromptSubmit",
+      "description": "Opcional. Atajo para arrancar el sprint de QA de un equipo: se activa únicamente cuando el mensaje del QA empieza con /inicio-sprint (por ejemplo, \"/inicio-sprint Equipo Alfa\") y lanza el modo INICIO_SPRINT del agente qa-sprint, que lee el sprint activo, analiza las HU y crea el Test Plan del sprint con confirmación del QA en cada punto de control. Con cualquier otro mensaje no hace nada.",
+      "action": {
+        "type": "agent",
+        "prompt": "Solo si el mensaje del usuario empieza con \"/inicio-sprint\": usá la skill qa-inicio-sprint (o el agente qa-sprint en modo INICIO_SPRINT) con el equipo que indique el usuario después del comando, respetando todos sus puntos de control. En cualquier otro caso, ignorá esta instrucción por completo."
+      }
+    }
+  ]
+}

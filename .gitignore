@@ -1,0 +1,33 @@
+# =============================================================================
+# .gitignore del QA Playbook
+# Lista lo que git NO debe versionar (archivos locales, temporales o sensibles).
+# =============================================================================
+
+# --- Espacio de trabajo local de los agentes de Kiro ---
+# Cada QA guarda ahí su trabajo en curso (análisis, casos, borradores) y queda local.
+# Se ignora todo el contenido de .qa-work/ ...
+.qa-work/*
+# ... salvo esta planilla compartida, que sí se versiona
+# (el "!" al principio significa "excepción a la regla anterior").
+!.qa-work/validacion-skills.md
+!.qa-work/indice-general.md
+
+# --- Secretos y configuración local ---
+# Nunca se versionan credenciales: van en variables de entorno o en un archivo .env local.
+.env
+.env.*
+# El ejemplo sin valores reales sí puede subirse.
+!.env.example
+
+# --- Dependencias y salidas generadas ---
+# Paquetes instalados con npm (por ejemplo, los de plantilla-automation/).
+node_modules/
+# Reportes y resultados que genera Playwright al correr los tests.
+playwright-report/
+test-results/
+
+# --- Archivos del sistema operativo y del editor ---
+# Metadatos que crean Windows y macOS.
+Thumbs.db
+desktop.ini
+.DS_Store

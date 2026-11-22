@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<!--
+  PRESENTACIÓN: QA con Kiro · Cómo trabajamos
+  Para qué sirve: presentar en una sola página qué es Kiro para QA, cómo se organizan agentes, skills y steerings,
+                  el flujo de trabajo, los puntos de control y la plantilla de automatización con Playwright y
+                  Page Object Model (POM).
+  Quién la usa: el equipo de QA al presentar el modelo de trabajo o al incorporar a una persona nueva.
+  Cuándo se usa: en una charla de inducción o como lectura rápida antes de [como-trabajamos-con-kiro.md].
+  Autónoma: no carga fuentes, scripts, imágenes ni hojas de estilo externas. Se abre con doble clic en cualquier navegador.
+  Sin JavaScript: la navegación usa anclas (#id) y el contenido desplegable usa los elementos details/summary.
+  Ejemplo de producto: Tienda Demo (login, catálogo, carrito y checkout), inspirada en https://www.saucedemo.com/
+-->
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QA con Kiro · Cómo trabajamos</title>
+
+  <style>
+    /* ==========================================================
+       1. VARIABLES DE DISEÑO
+       Todos los colores, radios y tipografías se definen acá,
+       para cambiar el aspecto de toda la página desde un solo lugar.
+       ========================================================== */
+    :root {
+      --fondo: #12153a;          /* color de fondo de la página */
+      --panel: #1c2150;          /* fondo de tarjetas y tablas */
+      --panel-2: #232a5e;        /* fondo de encabezados y bloques destacados */
+      --linea: #2f3772;          /* bordes finos */
+      --guion: #4a5596;          /* borde punteado de las tarjetas */
+      --texto: #d6dbf5;          /* texto principal */
+      --suave: #9aa3cf;          /* texto secundario */
+      --blanco: #ffffff;         /* títulos */
+      --menta: #7ef0c8;          /* acento 1 (QA funcional y automation) */
+      --celeste: #5ee0f0;        /* acento 2 (enlaces y código) */
+      --azul: #6b9cff;           /* acento 3 */
+      --violeta: #a58bff;        /* acento 4 (flujo SDD) */
+      --amarillo: #ffd88a;       /* puntos de control */
+      --radio: 14px;            /* redondeo de esquinas */
+      /* Tipografías del sistema: no se descarga ninguna fuente externa */
+      --fuente: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+      --mono: Consolas, "Cascadia Code", "Courier New", monospace;
+    }
+
+    /* ==========================================================
+       2. BASE
+       Reglas generales: caja, scroll suave, cuerpo y enlaces.
+       ========================================================== */
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--fondo);
+      color: var(--texto);
+      font: 15px/1.6 var(--fuente);
+    }
+    a { color: var(--celeste); }
+    code {
+      font-family: var(--mono);
+      font-size: .9em;
+      color: var(--menta);
+    }
+
+    /* ==========================================================
+       3. BARRA DE NAVEGACIÓN SUPERIOR
+       Queda fija arriba y lleva enlaces a cada sección.
+       ========================================================== */
+    header.barra {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(18, 21, 58, .95);
+      border-bottom: 1px solid var(--linea);
+    }
+    .barra nav {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 12px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 20px;
+      align-items: center;
+    }
+    .marca { font-weight: 800; color: var(--blanco); font-size: 17px; }
+    .marca span { color: var(--menta); }
+    .barra a { color: var(--suave); text-decoration: none; font-size: 14px; }
+    .barra a:hover { color: var(--blanco); }
+
+    /* ==========================================================
+       4. CONTENEDOR Y TÍTULOS
+       main centra el contenido; section separa los bloques.
+       ========================================================== */
+    main { max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
+    section { padding-top: 64px; }
+    h1 { font-size: 42px; line-height: 1.15; color: var(--blanco); margin: 40px 0 12px; max-width: 760px; }
+    h2 { font-size: 28px; color: var(--blanco); margin: 0 0 8px; }
+    h3 { font-size: 17px; color: var(--blanco); margin: 0 0 6px; }
+    .intro { color: var(--suave); max-width: 820px; margin: 0 0 24px; font-size: 16px; }
+
+    /* ==========================================================
+       5. CITA DESTACADA (portada)
+       Frase central del modelo: Kiro propone, el QA decide.
+       ========================================================== */
+    .cita {
+      display: inline-block;
+      margin: 6px 0 28px;
+      padding: 14px 20px;
+      border: 1.5px dashed var(--guion);
+      border-radius: var(--radio);
+      color: var(--blanco);
+      background: rgba(28, 33, 80, .6);
+    }
+    .cita b { color: var(--menta); }
+
+    /* ==========================================================
+       6. CUADRÍCULA DE TARJETAS
+       Se adapta sola al ancho de la pantalla (3, 2 o 1 columnas).
+       ========================================================== */
+    .cuadricula {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+    .tarjeta {
+      background: var(--panel);
+      border: 1px solid var(--linea);
+      border-top: 4px solid var(--color, var(--celeste)); /* --color se define en cada tarjeta */
+      border-radius: var(--radio);
+      padding: 18px 20px;
+    }
+    .tarjeta p { margin: 6px 0 0; color: var(--suave); font-size: 14px; }
+    .tarjeta .ruta { font-family: var(--mono); font-size: 12.5px; color: var(--menta); margin-top: 10px; display: block; }
+    .tarjeta .modos { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+    /* Etiqueta pequeña (modo de un agente, nombre de skill) */
+    .etiqueta {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--blanco);
+      background: var(--panel-2);
+      border: 1px solid var(--linea);
+      border-radius: 20px;
+      padding: 2px 10px;
+    }
+
+    /* ==========================================================
+       7. PILA DEL MODELO (agente → skills → steerings)
+       Tres bloques apilados que muestran la dependencia entre piezas.
+       ========================================================== */
+    .pila { display: flex; flex-direction: column; align-items: center; gap: 4px; margin: 28px 0 8px; }
+    .pila .nivel {
+      width: 100%;
+      max-width: 640px;
+      padding: 12px 22px;
+      border-radius: 40px;
+      color: #10133a;
+      font-weight: 700;
+      font-size: 14px;
+      text-align: center;
+    }
+    .pila .nivel.n1 { background: var(--violeta); }
+    .pila .nivel.n2 { background: var(--azul); }
+    .pila .nivel.n3 { background: var(--menta); }
+    .pila .conector { color: var(--suave); font-size: 13px; }
+
+    /* ==========================================================
+       8. TABLAS
+       Se usan para comparar flujos y listar agentes y modos.
+       ========================================================== */
+    .tabla-envoltorio { overflow-x: auto; } /* permite desplazar la tabla en pantallas angostas */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--linea);
+      font-size: 14px;
+    }
+    th, td { padding: 11px 14px; border-bottom: 1px solid var(--linea); text-align: left; vertical-align: top; }
+    th { background: var(--panel-2); color: var(--blanco); }
+    td:first-child { color: var(--suave); font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+
+    /* ==========================================================
+       9. FLUJO DE TRABAJO (pasos numerados)
+       Lista ordenada con un círculo numérico por paso.
+       ========================================================== */
+    .carril {
+      background: rgba(28, 33, 80, .55);
+      border: 1px solid var(--linea);
+      border-radius: 20px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+    .carril > h3 { text-transform: uppercase; letter-spacing: 1.2px; font-size: 12px; color: var(--suave); margin-bottom: 12px; }
+    ol.pasos { list-style: none; margin: 0; padding: 0; counter-reset: paso; display: grid; gap: 10px; }
+    ol.pasos li {
+      counter-increment: paso;
+      position: relative;
+      background: var(--panel-2);
+      border-radius: 12px;
+      padding: 10px 14px 10px 54px;
+      min-height: 48px;
+    }
+    /* El número del paso se genera con un contador CSS, sin JavaScript */
+    ol.pasos li::before {
+      content: counter(paso);
+      position: absolute;
+      left: 12px;
+      top: 10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--menta);
+      color: #10133a;
+      font-weight: 800;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    ol.pasos b { color: var(--blanco); }
+    ol.pasos .quien { font-family: var(--mono); font-size: 12px; color: var(--celeste); }
+
+    /* ==========================================================
+       10. PUNTO DE CONTROL
+       Marca visual del momento en que Kiro se detiene y espera.
+       ========================================================== */
+    .control {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      color: var(--amarillo);
+      background: rgba(255, 216, 138, .08);
+      border: 1px solid rgba(255, 216, 138, .35);
+      border-radius: 10px;
+      padding: 7px 12px;
+      display: inline-block;
+      margin: 6px 0 0;
+    }
+
+    /* ==========================================================
+       11. NOTAS Y BLOQUES DESPLEGABLES
+       .nota: aviso con borde punteado. details/summary: contenido que se abre con un clic.
+       ========================================================== */
+    .nota {
+      border: 1.5px dashed var(--guion);
+      border-radius: var(--radio);
+      padding: 14px 18px;
+      margin: 14px 0;
+      background: rgba(126, 240, 200, .05);
+      font-size: 14px;
+    }
+    details {
+      background: var(--panel);
+      border: 1px solid var(--linea);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin: 10px 0;
+    }
+    summary { cursor: pointer; color: var(--blanco); font-weight: 700; }
+    details[open] summary { margin-bottom: 8px; }
+
+    /* ==========================================================
+       12. BLOQUES DE CÓDIGO
+       Fondo oscuro y desplazamiento horizontal para líneas largas.
+       ========================================================== */
+    pre {
+      background: #0c0f2b;
+      border: 1px solid var(--linea);
+      border-radius: 12px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      font: 13px/1.55 var(--mono);
+      color: var(--texto);
+      margin: 10px 0;
+    }
+    pre .c { color: var(--suave); } /* comentarios dentro del código */
+
+    /* ==========================================================
+       13. PIE DE PÁGINA
+       ========================================================== */
+    footer {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+      border-top: 1px solid var(--linea);
+      color: var(--suave);
+      font-size: 13px;
+    }
+
+    /* ==========================================================
+       14. PANTALLAS ANGOSTAS
+       Reduce el tamaño de los títulos en celulares.
+       ========================================================== */
+    @media (max-width: 600px) {
+      h1 { font-size: 30px; }
+      h2 { font-size: 23px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       BARRA SUPERIOR
+       Enlaces a las secciones de la página mediante anclas (#id).
+       ============================================================ -->
+  <header class="barra">
+    <nav>
+      <div class="marca">QA <span>con</span> Kiro</div>
+      <a href="#que-es">Qué es Kiro</a>
+      <a href="#modelo">El modelo</a>
+      <a href="#agentes">Agentes</a>
+      <a href="#flujo">Flujo de trabajo</a>
+      <a href="#control">Puntos de control</a>
+      <a href="#automation">Automation con Playwright</a>
+      <a href="#dia">Día a día</a>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ============================================================
+         1. PORTADA Y QUÉ ES KIRO PARA QA
+         Explica en pocas líneas qué es Kiro y qué rol tiene el QA.
+         ============================================================ -->
+    <section id="que-es" style="padding-top:8px">
+      <h1>Cómo trabajamos con Kiro en QA</h1>
+      <p class="intro">Kiro es un IDE (entorno de desarrollo) con inteligencia artificial integrada. Con el repositorio
+        <code>qa-playbook</code> abierto, conoce nuestro proceso, nuestros estándares, las reglas de negocio y el perfil
+        de cada equipo, y se conecta a Jira, Xray y GitHub a través de MCP (<i>Model Context Protocol</i>, el mecanismo
+        con el que Kiro usa herramientas externas).</p>
+      <div class="cita">Kiro propone y prepara. <b>El QA decide.</b> Nada se publica en Jira, Xray ni GitHub sin su
+        confirmación.</div>
+
+      <!-- Tarjetas con las ideas centrales. El color del borde superior de cada tarjeta se define con la variable CSS "color" en su atributo style. -->
+      <div class="cuadricula">
+        <div class="tarjeta" style="--color:var(--menta)">
+          <h3>Qué hace por el QA</h3>
+          <p>Analiza historias de usuario (HU), propone la matriz de cobertura y los casos, los carga en Xray, redacta
+            bugs y arma informes. Automatiza lo repetitivo para que el QA dedique su tiempo al criterio.</p>
+        </div>
+        <div class="tarjeta" style="--color:var(--celeste)">
+          <h3>Qué no hace</h3>
+          <p>No inventa reglas de negocio, datos ni etiquetas: si falta información, la pide. No borra nada y no
+            escribe en Jira, Xray ni GitHub sin una confirmación explícita.</p>
+        </div>
+        <div class="tarjeta" style="--color:var(--azul)">
+          <h3>Producto de ejemplo</h3>
+          <p>La <b>Tienda Demo</b>: una tienda online con login, catálogo (inventario), carrito y checkout, inspirada
+            en el sitio público <code>https://www.saucedemo.com/</code>. Los ambientes son QA, PRE y PROD, y nunca se
+            prueba en PROD.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         2. EL MODELO: AGENTES, SKILLS Y STEERINGS
+         Tres tipos de pieza y cómo se apoyan unas en otras.
+         ============================================================ -->
+    <section id="modelo">
+      <h2>El modelo: agentes, skills y steerings</h2>
+      <p class="intro">Tres tipos de pieza trabajan juntas, apoyadas en el perfil del equipo y en la documentación
+        funcional. Las piezas son iguales para todos los equipos; lo propio de cada equipo vive en su perfil.</p>
+
+      <div class="cuadricula">
+        <div class="tarjeta" style="--color:var(--violeta)">
+          <h3>Agente</h3>
+          <p>Un rol que encadena varias skills, ordena el trabajo en modos, muestra el estado y tiene permisos
+            acotados. Se elige en el selector de agentes del chat.</p>
+          <span class="ruta">.kiro/agents/</span>
+        </div>
+        <div class="tarjeta" style="--color:var(--azul)">
+          <h3>Skill</h3>
+          <p>Un procedimiento concreto con sus pasos y su punto de control. Por ejemplo: analizar una HU, cargar
+            casos en Xray o reportar un bug. Se puede usar dentro de un agente o suelta, con <code>/nombre</code>.</p>
+          <span class="ruta">.kiro/skills/&lt;nombre&gt;/SKILL.md</span>
+        </div>
+        <div class="tarjeta" style="--color:var(--menta)">
+          <h3>Steering</h3>
+          <p>Reglas que Kiro tiene en cuenta: principios de QA, cómo se escribe un caso, reglas de Jira y Xray,
+            seguridad de datos. Se cargan por tema, no por agente.</p>
+          <span class="ruta">.kiro/steering/</span>
+        </div>
+      </div>
+
+      <!-- Pila que muestra la dependencia: el agente usa skills, y las skills siguen steerings. -->
+      <div class="pila">
+        <div class="nivel n1">Agente · rol, modos, permisos, tablero de estado</div>
+        <div class="conector">usa</div>
+        <div class="nivel n2">Skills · procedimiento paso a paso con punto de control</div>
+        <div class="conector">siguiendo</div>
+        <div class="nivel n3">Steerings + perfil del equipo + documentación funcional</div>
+      </div>
+
+      <details>
+        <summary>Cuándo se carga cada steering</summary>
+        <div class="tabla-envoltorio">
+          <table>
+            <tr><th>Carga</th><th>Qué significa</th><th>Ejemplos</th></tr>
+            <tr><td>Siempre</td><td>Está en toda conversación</td><td><code>qa-principios</code></td></tr>
+            <tr><td>Por tema</td><td>Kiro lo carga solo cuando la tarea trata de ese tema</td>
+              <td><code>qa-jira-xray</code>, <code>qa-gherkin</code>, <code>qa-seguridad-datos</code>,
+                <code>qa-performance</code>, <code>qa-sdd</code>, <code>pw-proyecto</code></td></tr>
+            <tr><td>A pedido</td><td>Lo usa una skill o el QA con <code>#nombre</code></td><td><code>pw-code-review</code></td></tr>
+          </table>
+        </div>
+      </details>
+
+      <details>
+        <summary>Contexto que consumen las skills</summary>
+        <div class="tabla-envoltorio">
+          <table>
+            <tr><th>Contexto</th><th>Dónde está</th></tr>
+            <tr><td>Perfil del equipo (proyecto, integrantes, rutas, modalidad de trabajo)</td><td><code>05-equipos/</code></td></tr>
+            <tr><td>Documentación funcional (reglas de negocio, datos de prueba)</td><td><code>04-funcionalidades/</code></td></tr>
+            <tr><td>DoR y DoD (condiciones para empezar y para cerrar una HU)</td><td><code>01-estandares-globales/</code></td></tr>
+            <tr><td>Catálogo de etiquetas y plantillas de test plan</td><td><code>02-qa-funcional/</code></td></tr>
+            <tr><td>Contratos, plantillas y decisiones</td><td><code>00-introduccion/kiro/</code></td></tr>
+            <tr><td>Espacio de trabajo local (Borrador, Aprobado, Publicado)</td><td><code>.qa-work/</code></td></tr>
+          </table>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============================================================
+         3. LOS SIETE AGENTES
+         Una tarjeta por agente, con su nivel y sus modos.
+         ============================================================ -->
+    <section id="agentes">
+      <h2>Los siete agentes</h2>
+      <p class="intro">Se les pide un modo con una clave. Ejemplos: <code>ANALIZAR_HU PROJ-123</code>,
+        <code>AUTOMATIZAR AUTO-45 playwright</code>, <code>REVISAR_PR playwright #245</code>.</p>
+
+      <div class="cuadricula">
+        <div class="tarjeta" style="--color:var(--amarillo)">
+          <h3><code>qa-sprint</code></h3>
+          <p>Nivel sprint. Arranca el sprint de QA del equipo, sigue su avance y lo cierra con el informe. Artefacto:
+            test plan del sprint (ej. "Test Plan Sprint 12 - Equipo Alfa").</p>
+          <div class="modos"><span class="etiqueta">INICIO_SPRINT</span><span class="etiqueta">SEGUIMIENTO</span><span class="etiqueta">CIERRE_SPRINT</span></div>
+        </div>
+        <div class="tarjeta" style="--color:var(--azul)">
+          <h3><code>qa-maestro</code></h3>
+          <p>Nivel HU, equipos funcionales. Acompaña el ciclo completo de una historia: análisis, casos, carga en
+            Xray, bugs, re-ejecución y cierre.</p>
+          <div class="modos"><span class="etiqueta">ANALIZAR_HU</span><span class="etiqueta">GENERAR_TESTS</span><span class="etiqueta">CARGAR_XRAY</span><span class="etiqueta">REPORTAR_BUG</span><span class="etiqueta">REEJECUTAR</span><span class="etiqueta">CIERRE_HU</span><span class="etiqueta">VALIDAR_TESTS</span><span class="etiqueta">AUDITAR_EJECUCION</span><span class="etiqueta">ACTUALIZAR_DOCUMENTACION</span><span class="etiqueta">ESTADO</span><span class="etiqueta">QA</span></div>
+        </div>
+        <div class="tarjeta" style="--color:var(--violeta)">
+          <h3><code>qa-sdd</code></h3>
+          <p>Nivel HU, equipos con SDD (<i>Spec-Driven Development</i>, desarrollo guiado por especificaciones; en el
+            ejemplo, Equipo Delta). Revisa la spec, diseña casos en paralelo al desarrollo, arma el paquete para
+            desarrollo, revisa el código antes del deploy (FWT) y audita cada PASS.</p>
+          <div class="modos"><span class="etiqueta">REVISAR_SPEC</span><span class="etiqueta">ANALIZAR</span><span class="etiqueta">GENERAR_TESTS</span><span class="etiqueta">PAQUETE</span><span class="etiqueta">CARGAR_XRAY</span><span class="etiqueta">FWT</span><span class="etiqueta">EJECUTAR</span><span class="etiqueta">REPORTAR_BUG</span><span class="etiqueta">REEJECUTAR</span><span class="etiqueta">CIERRE_HU</span><span class="etiqueta">ESTADO</span><span class="etiqueta">SDD</span></div>
+        </div>
+        <div class="tarjeta" style="--color:var(--azul)">
+          <h3><code>qa-regresion</code></h3>
+          <p>Nivel release. Antes de una salida a producción define el alcance, selecciona los tests de regresión,
+            crea el test plan y da el veredicto.</p>
+          <div class="modos"><span class="etiqueta">PREPARAR_REGRESION</span><span class="etiqueta">INFORME_REGRESION</span></div>
+        </div>
+        <div class="tarjeta" style="--color:var(--menta)">
+          <h3><code>qa-automation</code></h3>
+          <p>Planifica, implementa, repara y registra en Xray los tests automatizados. Lo propio del framework lo
+            lee del repositorio abierto en el workspace.</p>
+          <div class="modos"><span class="etiqueta">PLANIFICAR</span><span class="etiqueta">IMPLEMENTAR</span><span class="etiqueta">REPARAR</span><span class="etiqueta">REGISTRAR_XRAY</span><span class="etiqueta">ESTADO</span><span class="etiqueta">AUTOMATIZAR</span></div>
+        </div>
+        <div class="tarjeta" style="--color:var(--celeste)">
+          <h3><code>qa-performance</code></h3>
+          <p>Pruebas de carga y estrés: desde el pedido del equipo hasta el informe final, con corridas en PRE.
+            Los frameworks de performance (por ejemplo k6) son una opción que el equipo puede sumar; no vienen en la
+            plantilla.</p>
+          <div class="modos"><span class="etiqueta">ANALIZAR</span><span class="etiqueta">PLANIFICAR</span><span class="etiqueta">IMPLEMENTAR</span><span class="etiqueta">CALIBRAR</span><span class="etiqueta">EJECUTAR</span><span class="etiqueta">INFORMAR</span><span class="etiqueta">REPARAR</span><span class="etiqueta">ESTADO</span><span class="etiqueta">PERFORMANCE</span></div>
+        </div>
+        <div class="tarjeta" style="--color:var(--azul)">
+          <h3><code>qa-pr</code></h3>
+          <p>Crea el Pull Request (PR) de una rama con el formato del equipo y revisa PR con criterios transversales
+            y del framework. No modifica código.</p>
+          <div class="modos"><span class="etiqueta">REVISAR_PR</span><span class="etiqueta">CREAR_PR</span></div>
+        </div>
+      </div>
+
+      <div class="nota"><b>Agente o skill suelta.</b> El agente encadena etapas, muestra el tablero de estado y trabaja
+        con permisos acotados. La skill suelta hace una sola tarea y usa los permisos generales de Kiro. Se recomienda
+        el agente para el trabajo diario y la skill suelta para una tarea puntual.</div>
+    </section>
+
+    <!-- ============================================================
+         4. FLUJO DE TRABAJO
+         Pasos numerados del sprint, de cada HU y de la salida a producción.
+         Cada paso indica agente, modo y qué produce.
+         ============================================================ -->
+    <section id="flujo">
+      <h2>Flujo de trabajo</h2>
+      <p class="intro">Tres niveles: el sprint del equipo, cada HU y la salida a producción. Todo lo de la HU se
+        asocia al test plan del sprint. Los casos que se cargan en Xray son la entrada de <code>qa-automation</code>:
+        así se conectan el trabajo funcional y el de automatización.</p>
+
+      <!-- Carril 1: sprint -->
+      <div class="carril">
+        <h3>Sprint · agente qa-sprint</h3>
+        <ol class="pasos">
+          <li><b>Planning.</b> Lee el sprint activo, reparte las HU entre los QA y crea el test plan del sprint y las
+            carpetas de evidencias. <span class="quien">qa-sprint · INICIO_SPRINT</span></li>
+          <li><b>Seguimiento.</b> Muestra el avance por HU y mantiene vivo el test plan: riesgos, HU no planificadas y
+            reparto. <span class="quien">qa-sprint · SEGUIMIENTO</span></li>
+          <li><b>Cierre del sprint.</b> Arma el informe con métricas de Xray y bugs por severidad.
+            <span class="quien">qa-sprint · CIERRE_SPRINT</span></li>
+        </ol>
+      </div>
+
+      <!-- Carril 2: cada HU -->
+      <div class="carril">
+        <h3>Cada HU · agente qa-maestro (modo QA = flujo completo)</h3>
+        <ol class="pasos">
+          <li><b>Análisis.</b> ¿La HU cumple el DoR? Riesgos, impacto, regresión recomendada y cobertura existente.
+            <span class="quien">ANALIZAR_HU · qa-analisis-hu</span></li>
+          <li><b>Matriz de cobertura.</b> Criterio → condición de prueba → técnica y prioridad. Se decide qué se prueba
+            y qué no, y se aprueba antes de escribir los casos.
+            <span class="quien">GENERAR_TESTS · qa-diseno-casos</span></li>
+          <li><b>Casos de prueba.</b> Escenarios Gherkin con etiquetas del catálogo y marca de regresión y de
+            candidato a automatizar. <span class="quien">GENERAR_TESTS · qa-diseno-casos</span></li>
+          <li><b>Carga en Xray.</b> Tests, Test Set y Test Execution vinculados a la HU y al test plan del sprint.
+            <span class="quien">CARGAR_XRAY · qa-carga-xray</span></li>
+          <li><b>Ejecución y bugs.</b> El QA ejecuta. Si algo falla se reporta el bug; cuando se corrige, se crea la
+            re-ejecución. <span class="quien">REPORTAR_BUG · REEJECUTAR</span></li>
+          <li><b>Cierre de la HU.</b> Estado de ejecuciones, bugs, evidencias y DoD; propone el comentario de cierre.
+            <span class="quien">CIERRE_HU · qa-cierre-hu</span></li>
+        </ol>
+      </div>
+
+      <!-- Carril 3: salida a producción -->
+      <div class="carril">
+        <h3>Salida a producción · agente qa-regresion</h3>
+        <ol class="pasos">
+          <li><b>Preparar la regresión.</b> Alcance del release, selección de tests (automatizados y manuales) y test
+            plan de regresión (ej. "Test Plan Regresión Release 2.4").
+            <span class="quien">PREPARAR_REGRESION</span></li>
+          <li><b>Informe y veredicto.</b> Métricas, bugs, riesgos, performance y veredicto del release:
+            <span class="quien">GO, GO WITH RISKS o NO GO · INFORME_REGRESION</span></li>
+        </ol>
+      </div>
+
+      <h3 style="margin-top:26px">Funcional y SDD, lado a lado</h3>
+      <p class="intro" style="margin-bottom:12px">El perfil del equipo indica la <b>Modalidad de trabajo</b>. Si se
+        abre el agente equivocado, Kiro lo avisa.</p>
+      <div class="tabla-envoltorio">
+        <table>
+          <tr><th></th><th>Flujo funcional · <code>qa-maestro</code></th><th>Flujo SDD · <code>qa-sdd</code></th></tr>
+          <tr><td>Equipos</td><td>Alfa, Beta y Gamma (modalidad <code>Funcional</code>)</td><td>Delta (modalidad <code>SDD</code>)</td></tr>
+          <tr><td>Qué llega a QA</td><td>La HU con sus criterios de aceptación</td>
+            <td>La HU y la spec de desarrollo: <code>requirement.md</code>, <code>design.md</code>, <code>tasks.md</code></td></tr>
+          <tr><td>Resultado esperado</td><td>HU y documentación funcional</td><td>HU &gt; requirement &gt; design &gt; tasks. El código nunca lo redefine</td></tr>
+          <tr><td>Cuándo trabaja QA</td><td>Cuando la HU llega a QA</td><td>Antes del sprint y en paralelo al desarrollo</td></tr>
+          <tr><td>Etapas propias</td><td>No tiene</td><td>Revisión de la spec, paquete para desarrollo, FWT, auditoría de cada PASS</td></tr>
+          <tr><td>DoR y DoD</td><td><code>definicion-dor-dod.md</code></td><td><code>definicion-dor-dod-sdd.md</code></td></tr>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         5. PUNTOS DE CONTROL
+         Cómo se detiene Kiro y qué reglas protegen al QA.
+         ============================================================ -->
+    <section id="control">
+      <h2>Puntos de control</h2>
+      <p class="intro">Kiro trabaja por etapas y se detiene en cada punto de control: muestra lo que hizo o lo que va a
+        hacer y espera una respuesta explícita. Si el QA pide un ajuste, Kiro corrige y vuelve a mostrar.</p>
+
+      <!-- Así se ve un punto de control en el chat de Kiro -->
+      <div class="control">[PUNTO DE CONTROL] Matriz de cobertura · esperando tu confirmación</div>
+
+      <div class="cuadricula" style="margin-top:20px">
+        <div class="tarjeta" style="--color:var(--amarillo)">
+          <h3>Nada se publica sin confirmación</h3>
+          <p>El QA es responsable de lo que queda en Jira y Xray. Las escrituras piden aprobación; nada se transiciona
+            solo.</p>
+        </div>
+        <div class="tarjeta" style="--color:var(--amarillo)">
+          <h3>Una etapa por vez</h3>
+          <p>Se revisa a medida que se avanza y un error se corrige antes de seguir.</p>
+        </div>
+        <div class="tarjeta" style="--color:var(--amarillo)">
+          <h3>La matriz se aprueba primero</h3>
+          <p>La matriz de cobertura se aprueba antes de escribir los casos: es el punto que más retrabajo ahorra.</p>
+        </div>
+        <div class="tarjeta" style="--color:var(--amarillo)">
+          <h3>No se inventa</h3>
+          <p>Si falta información (reglas de negocio, datos, etiquetas), Kiro la pide al QA o la deja como pregunta
+            para el PO.</p>
+        </div>
+        <div class="tarjeta" style="--color:var(--amarillo)">
+          <h3>Nada se borra</h3>
+          <p>Los tests se deprecan; los vínculos erróneos los corrige el QA. Los agentes no pueden borrar.</p>
+        </div>
+        <div class="tarjeta" style="--color:var(--amarillo)">
+          <h3>Profundidad a elección</h3>
+          <p>Rápido, Estándar (por defecto) o Exhaustivo. Ejemplo: "analizá la HU PROJ-123 en modo rápido".</p>
+        </div>
+      </div>
+
+      <div class="nota"><b>Atención:</b> los datos de prueba son siempre ficticios. Las credenciales nunca se escriben
+        en archivos del repositorio: van en variables de entorno. Las únicas que aparecen en este playbook son las del
+        sitio demo público SauceDemo.</div>
+    </section>
+
+    <!-- ============================================================
+         6. PLANTILLA DE AUTOMATION CON PLAYWRIGHT Y POM
+         Estructura, convenciones, ejemplo de código y comandos.
+         ============================================================ -->
+    <section id="automation">
+      <h2>Plantilla de automation: Playwright con Page Object Model</h2>
+      <p class="intro">El repositorio <code>plantilla-automation</code> es la base para automatizar pruebas de front
+        y un ejemplo de pruebas de API. Usa Playwright (TypeScript) y el patrón POM (<i>Page Object Model</i>): cada
+        pantalla tiene una clase que sabe <b>cómo</b> interactuar con ella, y el test decide <b>qué</b> se espera.
+        Trae fixtures (los Page Objects listos para usar en cada test), sesión guardada (el login se hace una sola vez),
+        proyectos de ejecución, ambientes elegibles con una variable, controles de calidad (ESLint y Prettier) y un
+        pipeline de GitHub Actions. Está pensada para el sitio demo <code>https://www.saucedemo.com/</code>.</p>
+
+      <div class="cuadricula">
+        <div class="tarjeta" style="--color:var(--menta)">
+          <h3>Estructura</h3>
+<pre>plantilla-automation/
+├── pages/          <span class="c">// BasePage.ts + Page Objects: LoginPage,</span>
+│                   <span class="c">// InventoryPage, CartPage, CheckoutPage</span>
+├── api/            <span class="c">// cliente de API: UsuariosApi.ts</span>
+├── fixtures/       <span class="c">// index.ts: los Page Objects como fixtures</span>
+├── config/         <span class="c">// ambientes.ts (demo, qa, pre) y sesion.ts</span>
+├── data/           <span class="c">// datos de prueba ficticios</span>
+├── utils/          <span class="c">// evidencia.ts: guarda capturas</span>
+├── tests/
+│   ├── auth.setup.ts   <span class="c">// inicia sesión una vez y la guarda</span>
+│   ├── sin-sesion/     <span class="c">// login.spec.ts, compra.spec.ts</span>
+│   ├── con-sesion/     <span class="c">// carrito.spec.ts, checkout.spec.ts</span>
+│   └── api/            <span class="c">// usuarios.api.spec.ts</span>
+├── evidencias/     <span class="c">// capturas por historia</span>
+├── playwright.config.ts, eslint.config.mjs, .prettierrc.json
+├── .kiro/steering/ <span class="c">// pw-proyecto, pw-code-review</span>
+└── .github/workflows/playwright.yml</pre>
+        </div>
+        <div class="tarjeta" style="--color:var(--celeste)">
+          <h3>Convenciones</h3>
+          <p>Page Object por pantalla: <code>pages/[Pantalla]Page.ts</code> (todos heredan de <code>BasePage</code>).
+            Test por funcionalidad: <code>tests/sin-sesion/[funcionalidad].spec.ts</code> si arranca sin usuario
+            autenticado, <code>tests/con-sesion/[funcionalidad].spec.ts</code> si el login es solo una precondición, y
+            <code>tests/api/[recurso].api.spec.ts</code> para la API.</p>
+          <p>Los tests reciben los Page Objects como fixtures (<code>async ({ loginPage }) =&gt; ...</code>): no
+            escriben <code>new LoginPage(page)</code>. Las aserciones <code>expect</code> van en el test, nunca en el
+            Page Object.</p>
+          <p>Selectores estables: preferir <code>data-test</code> o <code>data-testid</code> antes que textos o
+            posiciones (SauceDemo usa <code>data-test</code>).</p>
+          <p>Nada de esperas fijas (<code>waitForTimeout</code>): se usan las esperas automáticas de Playwright y las
+            aserciones web-first.</p>
+          <p>El título de cada test lleva el ID del caso. Las precondiciones van en <code>test.beforeEach</code> y los
+            tests se agrupan con <code>test.describe</code>. ESLint y Prettier hacen cumplir estas reglas con
+            <code>npm run verificar</code>.</p>
+        </div>
+      </div>
+
+      <!-- Ejemplo mínimo de Page Object y de test. Es ilustrativo y está abreviado: los archivos reales están en plantilla-automation/. -->
+      <details open>
+        <summary>Ejemplo: Page Object de login</summary>
+<pre><span class="c">// pages/LoginPage.ts · sabe CÓMO interactuar con la pantalla de login (versión abreviada)</span>
+import { Page, Locator } from '@playwright/test';
+import { BasePage } from './BasePage';
+
+<span class="c">// BasePage guarda la "page" y ofrece goto(); todos los Page Objects la extienden</span>
+export class LoginPage extends BasePage {
+  readonly usernameInput: Locator;
+  readonly passwordInput: Locator;
+  readonly loginButton: Locator;
+  readonly errorMessage: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    <span class="c">// Selectores estables basados en data-test</span>
+    this.usernameInput = page.locator('[data-test="username"]');
+    this.passwordInput = page.locator('[data-test="password"]');
+    this.loginButton = page.locator('[data-test="login-button"]');
+    this.errorMessage = page.locator('[data-test="error"]');
+  }
+
+  async navigate(): Promise&lt;void&gt; {
+    await this.goto('/');
+  }
+
+  <span class="c">// Acción compuesta: sin aserciones, el test decide qué espera</span>
+  async login(username: string, password: string): Promise&lt;void&gt; {
+    await this.usernameInput.fill(username);
+    await this.passwordInput.fill(password);
+    await this.loginButton.click();
+  }
+}</pre>
+      </details>
+
+      <details open>
+        <summary>Ejemplo: test de login con fixtures</summary>
+<pre><span class="c">// tests/sin-sesion/login.spec.ts · decide QUÉ se espera (las aserciones expect viven acá)</span>
+<span class="c">// "test" viene de fixtures/: ya trae el Page Object listo como parámetro ({ loginPage })</span>
+import { test, expect } from '../../fixtures';
+import { USUARIOS } from '../../data/usuarios';
+
+test.describe('PROJ-101 - Login', () =&gt; {
+  <span class="c">// Precondición común: abrir la pantalla de login</span>
+  test.beforeEach(async ({ loginPage }) =&gt; {
+    await loginPage.navigate();
+  });
+
+  <span class="c">// El título lleva el ID del caso: PROJ-101-CP01</span>
+  test('PROJ-101-CP01 - Login exitoso con usuario válido', async ({ loginPage, page }) =&gt; {
+    <span class="c">// USUARIOS.estandar usa standard_user / secret_sauce, credenciales del sitio demo público SauceDemo.</span>
+    <span class="c">// En un proyecto real las credenciales van en variables de entorno (QA_USER, QA_PASSWORD).</span>
+    await loginPage.login(USUARIOS.estandar.username, USUARIOS.estandar.password);
+    await expect(page).toHaveURL(/inventory\.html/);
+  });
+
+  test('PROJ-101-CP03 - Login fallido con usuario bloqueado', async ({ loginPage }) =&gt; {
+    await loginPage.login(USUARIOS.bloqueado.username, USUARIOS.bloqueado.password);
+    await expect(loginPage.errorMessage).toContainText('Sorry, this user has been locked out');
+  });
+});</pre>
+      </details>
+
+      <details>
+        <summary>Comandos y ejecución en CI</summary>
+<pre><span class="c"># Instalar dependencias y navegadores</span>
+npm ci
+npx playwright install
+
+<span class="c"># Correr todos los tests (setup, web y API), o solo un archivo, o solo la API</span>
+npx playwright test
+npx playwright test tests/sin-sesion/login.spec.ts
+npx playwright test --project=api
+
+<span class="c"># Ver el navegador mientras corre, y abrir el reporte</span>
+npx playwright test --headed
+npx playwright show-report
+
+<span class="c"># Controles de calidad: tipos (tsc) + reglas (ESLint) + formato (Prettier)</span>
+npm run verificar</pre>
+        <p>Variables de entorno disponibles (modelo en <code>.env.example</code>): <code>TEST_ENV</code> (ambiente:
+          <code>demo</code>, <code>qa</code> o <code>pre</code>; <code>prod</code> corta la ejecución),
+          <code>BASE_URL</code>, <code>API_URL</code>, <code>BROWSERS</code>, <code>HEADLESS</code>,
+          <code>SLOW_MO</code>, <code>BROWSER_CHANNEL</code>, <code>QA_USER</code> y <code>QA_PASSWORD</code>. En CI,
+          GitHub Actions (<code>.github/workflows/playwright.yml</code>) corre <code>npm run verificar</code> y
+          <code>npx playwright test</code> en cada push y PR, y sube el reporte.</p>
+      </details>
+      <div class="nota"><b>Ciclo de una tarea de automatización.</b> Se crea la tarea en el proyecto <code>AUTO</code>
+        (ej. <code>AUTO-45</code>), se trabaja en la rama <code>feature/AUTO-45-login-negativos</code> con
+        <code>qa-automation</code>, se ejecutan los controles y los tests, se registra lo automatizado en Xray y se crea el PR con
+        <code>qa-pr</code>. Mensaje de commit de ejemplo: <code>AUTO-45: agrega casos negativos de login</code>. Las
+        capturas se guardan en <code>evidencias/&lt;ID-HISTORIA&gt;/</code>.</div>
+      <div class="nota">La plantilla ya incluye un ejemplo de pruebas de API hechas con Playwright (<code>tests/api/</code>).
+        Karate (API), k6 (performance) y herramientas mobile son frameworks que el equipo puede sumar; no están
+        incluidos en esta plantilla.</div>
+    </section>
+
+    <!-- ============================================================
+         7. DÍA A DÍA
+         Rutina diaria con el espacio de trabajo local .qa-work/.
+         ============================================================ -->
+    <section id="dia">
+      <h2>Tu día a día con Kiro</h2>
+      <p class="intro">Cada QA tiene en <code>qa-playbook/.qa-work/</code> su espacio de trabajo. Las skills guardan ahí
+        cada etapa (una carpeta por HU, sprint o tarea) y la planilla <code>indice-general.md</code> resume todo lo que
+        cada uno tiene en curso. La idea es abrir y cerrar el día con ella. Todos trabajan en el workspace
+        <b>QA-WORKSPACE</b>, armado con <code>qa-playbook</code> y <code>plantilla-automation</code>.</p>
+
+      <div class="carril">
+        <ol class="pasos">
+          <li><b>Al empezar el día.</b> Abrir QA-WORKSPACE y pedirle a Kiro que lea el índice. Ejemplo: "Revisá
+            .qa-work/indice-general.md y decime en qué estado está cada una de mis tareas y cuál es el siguiente
+            paso".</li>
+          <li><b>Durante el día.</b> Trabajar con el agente de cada rol. Cada etapa queda en
+            <code>.qa-work/&lt;clave&gt;/</code> con su estado (Borrador, Aprobado o Publicado). Para ver una tarea
+            puntual: <code>ESTADO PROJ-123</code> o <code>ESTADO AUTO-45</code>.</li>
+          <li><b>Al terminar el día.</b> Pedirle a Kiro que actualice el índice con lo que se hizo, para retomar al
+            otro día sin repetir consultas.</li>
+        </ol>
+      </div>
+
+      <div class="nota"><b>Validación de agentes y skills.</b> Cuando un agente o una skill falla, saltea un paso, le
+        falta o le sobra algo, se anota en <code>.qa-work/validacion-skills.md</code> con la clave de la HU o la tarea,
+        el mensaje enviado y lo que hizo. También se anota lo que funcionó bien. Esa planilla se envía a quien mantiene
+        el playbook para corregirlo. Una skill pasa de <b>Experimental</b> a <b>Homologado</b> (pasando por <b>En evaluación</b>) cuando
+        funciona bien con al menos dos equipos o dos QA distintos.</div>
+    </section>
+  </main>
+
+  <!-- ============================================================
+       PIE DE PÁGINA
+       Dónde profundizar en cada tema.
+       ============================================================ -->
+  <footer>
+    Para llevar este playbook a otro proyecto: <code>00-introduccion/adaptar-a-un-proyecto-nuevo.md</code>.
+    Detalle de cada pieza: <code>00-introduccion/como-trabajamos-con-kiro.md</code>,
+    <code>00-introduccion/kiro/contratos.md</code> y el <code>.md</code> de cada agente, skill y steering.
+    Guía de la plantilla: <code>03-qa-automatizacion/guia-plantilla-automation.md</code>.
+  </footer>
+</body>
+
+</html>

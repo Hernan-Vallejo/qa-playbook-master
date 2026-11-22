@@ -1,0 +1,26 @@
+# ---------------------------------------------------------------------------
+# Archivos que NO se suben al repositorio
+# ---------------------------------------------------------------------------
+
+# Dependencias instaladas por "npm ci" / "npm install" (se regeneran con package-lock.json)
+node_modules/
+
+# Resultados de cada corrida de Playwright (se regeneran en cada ejecución)
+/test-results/
+/playwright-report/
+/blob-report/
+
+# Caché y sesiones guardadas de Playwright (pueden contener cookies o tokens)
+/playwright/.cache/
+/playwright/.auth/
+
+# Variables de entorno locales: pueden tener usuarios y claves. Nunca se suben.
+# El archivo .env.example (sin datos reales) SÍ se sube, como modelo.
+.env
+.env.*
+!.env.example
+
+# Evidencias generadas (capturas). Se conserva solo la carpeta vacía gracias a .gitkeep;
+# en un proyecto real las evidencias se copian al repositorio documental del equipo.
+/evidencias/*
+!/evidencias/.gitkeep

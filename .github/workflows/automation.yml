@@ -1,0 +1,73 @@
+# =============================================================================
+# Workflow de la raíz: valida y prueba la plantilla de automation (plantilla-automation/)
+# =============================================================================
+# ¿Por qué existe este archivo si la plantilla ya trae su propio workflow?
+#   GitHub solo ejecuta los workflows de la carpeta .github/workflows de la RAÍZ del repositorio.
+#   Como este repositorio guarda DOS cosas (el playbook de documentación y la plantilla de
+#   automation), el workflow que realmente corre es este, y apunta a la subcarpeta.
+#   El workflow de plantilla-automation/.github/ se usa cuando copiás la plantilla a un
+#   repositorio propio (allí SÍ queda en la raíz).
+#
+# Solo se ejecuta si cambió algo dentro de plantilla-automation/ (o este mismo archivo),
+# para no gastar minutos cuando solo se editó documentación.
+# =============================================================================
+
+name: Automation (plantilla)
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - 'plantilla-automation/**'
+      - '.github/workflows/automation.yml'
+  push:
+    branches: [main, master]
+    paths:
+      - 'plantilla-automation/**'
+      - '.github/workflows/automation.yml'
+  workflow_dispatch: # Permite correrlo a mano desde la pestaña Actions.
+
+jobs:
+  automation:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+
+    # Todos los comandos "run" de este job se ejecutan dentro de la carpeta de la plantilla.
+    defaults:
+      run:
+        working-directory: plantilla-automation
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          # Guarda en caché las dependencias de npm entre corridas (las instala más rápido).
+          # Como el package-lock.json no está en la raíz, hay que indicar dónde está.
+          cache: npm
+          cache-dependency-path: plantilla-automation/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Tipos de TypeScript + ESLint (sin esperas fijas ni test.only) + formato Prettier.
+      - name: Verificar código (tipos, lint y formato)
+        run: npm run verificar
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: npx playwright test
+        env:
+          TEST_ENV: demo
+          BROWSERS: chromium
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          # Con "working-directory" las rutas de "uses" siguen siendo relativas a la raíz del repositorio.
+          path: plantilla-automation/playwright-report/
+          retention-days: 30

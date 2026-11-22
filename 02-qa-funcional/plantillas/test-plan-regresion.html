@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Plan de Regresión: &lt;EQUIPO&gt; - &lt;RELEASE&gt;</title>
+<!--
+  PLANTILLA: TEST PLAN DE REGRESIÓN (version 1.0)
+
+  Para que sirve:
+    Documento que define y registra la regresión de un release: qué se vuelve a probar,
+    cómo se ejecuta (manual y automatizado), qué riesgos hay y cuál es el veredicto final
+    (GO, GO WITH RISKS o NO GO). Lo crea el agente qa-regresion (modo PREPARAR_REGRESION)
+    antes de una salida productiva.
+
+  Quien lo usa:
+    El QA responsable de la regresión del equipo (Alfa, Beta, Gamma o Delta).
+
+  Como se completa:
+    1. Reemplazar los placeholders entre ángulos: <EQUIPO>, <RELEASE>, <PROYECTO>, etc.
+       (la lista completa está en 02-qa-funcional/estructura-test-plan.md, sección 5; en el código
+       fuente de este HTML se escriben como &lt;EQUIPO&gt; para que el navegador los muestre como texto).
+       Los placeholders de cierre (<RES_...> y <VEREDICTO>) se reemplazan por la palabra "pendiente"
+       al crear el plan y se completan al cerrar la regresión.
+    2. Las filas de ejemplo (PROJ-40, PROJ-123, Ana Prueba, etc.) son ficticias: reemplazarlas o borrarlas.
+    3. Cada sección tiene un comentario HTML que explica qué va y cómo completarla.
+    4. Los bloques con la clase "dinamico" muestran una búsqueda JQL (lenguaje de búsqueda de Jira).
+       Si el plan se vuelca a Jira, ese bloque se reemplaza por la lista viva de issues.
+
+  Esta plantilla es autónoma: no depende de archivos externos, de imágenes ni de scripts.
+  Usa solo datos ficticios. Nunca se prueba en producción: la regresión se ejecuta en QA (o en PRE si se indica expresamente).
+-->
+<style>
+  /* ---------- Estilos generales ---------- */
+  /* Fuente legible y ancho máximo cómodo para leer en pantalla o imprimir. */
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.5; color: #172b4d; max-width: 1000px; margin: 24px auto; padding: 0 16px; }
+  /* Títulos: h1 es el título del plan, h2 cada sección numerada, h3 las subsecciones. */
+  h1 { font-size: 24px; border-bottom: 2px solid #0052cc; padding-bottom: 8px; }
+  h2 { font-size: 18px; margin-top: 32px; border-bottom: 1px solid #c1c7d0; padding-bottom: 4px; }
+  h3 { font-size: 15px; margin-top: 20px; }
+
+  /* ---------- Tablas ---------- */
+  /* Todas las tablas del plan usan este estilo: bordes finos y encabezado gris. */
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 12px 0; }
+  th, td { border: 1px solid #c1c7d0; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #f4f5f7; }
+
+  /* ---------- Panel de resumen ---------- */
+  /* Recuadro azul del encabezado: release, fechas, plan de sprint vinculado y responsable. */
+  .panel { background: #deebff; border-left: 4px solid #0052cc; padding: 8px 12px; margin: 12px 0; }
+
+  /* ---------- Bloque dinámico ---------- */
+  /* Representa una lista de Jira que se actualiza sola. Se muestra con borde punteado
+     para distinguirlo del contenido que el QA edita a mano. */
+  .dinamico { border: 1px dashed #6b778c; background: #fafbfc; padding: 8px 12px; margin: 8px 0 12px 0; }
+  .dinamico code, td code { word-break: break-all; }
+
+  /* ---------- Veredicto ---------- */
+  /* Recuadro destacado para el veredicto final del release (sección 11). */
+  .veredicto { border: 2px solid #172b4d; padding: 8px 12px; font-weight: bold; }
+
+  /* ---------- Nota al pie de tabla ---------- */
+  /* Texto chico en cursiva para aclaraciones debajo de una tabla. */
+  .nota { font-style: italic; color: #5e6c84; }
+
+  /* ---------- Marcador de campo a completar ---------- */
+  /* Resalta en amarillo lo que todavía hay que reemplazar (placeholders y "pendiente"). */
+  .completar { background: #fff0b3; }
+
+  /* ---------- Impresión ---------- */
+  /* Al imprimir se quita el margen y se evitan cortes de tabla a mitad de fila. */
+  @media print { body { margin: 0; max-width: none; } tr { page-break-inside: avoid; } }
+</style>
+</head>
+<body>
+
+<!-- ======================================================================
+     ENCABEZADO
+     Título del plan y panel de resumen.
+     Completar: nombre del equipo, release (por ejemplo 2.4), proyecto, fechas de la
+     ventana de regresión, nombre del Test Plan del sprint vinculado (por ejemplo
+     "Test Plan Sprint 12 - Equipo Alfa") y responsable. El nombre final del plan
+     sigue el patrón "Test Plan Regresión Release 2.4".
+     ====================================================================== -->
+<h1>Plan de Regresión: <span class="completar">&lt;EQUIPO&gt;</span> - <span class="completar">&lt;RELEASE&gt;</span></h1>
+<div class="panel">
+  <p>Regresión del release <span class="completar">&lt;RELEASE&gt;</span> de <span class="completar">&lt;EQUIPO&gt;</span> (proyecto <span class="completar">&lt;PROYECTO&gt;</span>, por ejemplo PROJ), del <span class="completar">&lt;FECHA_INICIO&gt;</span> al <span class="completar">&lt;FECHA_FIN&gt;</span>. Vinculada a: <span class="completar">&lt;TEST_PLAN_SPRINT&gt;</span>. Responsable: <span class="completar">&lt;RESPONSABLE&gt;</span>. Plantilla homologada v<span class="completar">&lt;VERSION_PLANTILLA&gt;</span>.</p>
+</div>
+
+<!-- ======================================================================
+     1. OBJETIVO
+     Texto base. Completar solo el destino de salida del release: PRE (preproducción)
+     o PROD (producción). Recordar que la regresión se ejecuta en QA, no en el destino.
+     ====================================================================== -->
+<h2>1. Objetivo</h2>
+<p>Verificar que las funcionalidades existentes no se vean afectadas por los cambios del release <span class="completar">&lt;RELEASE&gt;</span> antes de su salida a <span class="completar">&lt;DESTINO&gt;</span>.</p>
+
+<!-- ======================================================================
+     2. ALCANCE
+     Qué entra a la regresión.
+     Completar: un párrafo con el alcance general y las tres partes siguientes.
+     ====================================================================== -->
+<h2>2. Alcance</h2>
+<!-- Ejemplo de alcance: "Regresión de login, catálogo, carrito y checkout de Tienda Demo por los cambios del release." -->
+<p><span class="completar">&lt;ALCANCE&gt;</span></p>
+
+<!-- 2.1 ÉPICAS E INICIATIVA
+     Una fila por épica o iniciativa incluida en el release. Columnas: Clave de Jira, Tipo
+     (Épica o Iniciativa) y Título. Las filas de abajo son de ejemplo: reemplazarlas. -->
+<h3>2.1 Épicas e iniciativa</h3>
+<table>
+  <tr><th>Clave</th><th>Tipo</th><th>Título</th></tr>
+  <tr><td>PROJ-40</td><td>Épica</td><td>Pedidos y seguimiento</td></tr>
+</table>
+
+<!-- 2.2 HISTORIAS DEL RELEASE
+     Lista dinámica de las HU que salen en el release. Reemplazar <JQL_ALCANCE> por la búsqueda,
+     por ejemplo: project = PROJ AND fixVersion = "2.4" AND issuetype = Story ORDER BY key ASC -->
+<h3>2.2 Historias del release</h3>
+<div class="dinamico">
+  <p>Lista dinámica de Jira (JQL):</p>
+  <p><code>&lt;JQL_ALCANCE&gt;</code></p>
+</div>
+
+<!-- 2.3 FLUJOS INCLUIDOS Y EXCLUIDOS
+     Una fila por flujo de usuario. Columna "Incluido": Sí o No. Columna "Motivo": por qué
+     entra o por qué se deja afuera (por ejemplo "no fue modificado y tiene baja criticidad"). -->
+<h3>2.3 Flujos incluidos y excluidos</h3>
+<table>
+  <tr><th>Flujo</th><th>Incluido</th><th>Motivo</th></tr>
+  <tr><td>Login con usuario válido</td><td>Sí</td><td>Acceso crítico: sin login no se puede operar</td></tr>
+  <tr><td>Compra completa (carrito y checkout)</td><td>Sí</td><td>Flujo principal de negocio, impactado por el release</td></tr>
+  <tr><td>Ordenar el catálogo por precio</td><td>No</td><td>No fue modificado en este release y tiene cobertura automatizada en la corrida diaria</td></tr>
+</table>
+
+<!-- ======================================================================
+     3. ESTRATEGIA
+     Explica cómo se selecciona y cómo se ejecuta la regresión.
+     La tabla de ejecución es texto base: completar los Test Sets y Test Executions
+     (claves de Xray) de cada conjunto.
+     ====================================================================== -->
+<h2>3. Estrategia</h2>
+<p>La selección de tests parte de los casos con campo <strong>Regresión = Sí</strong> de las funcionalidades del alcance. El campo <strong>Automatizado</strong> define cómo se ejecuta cada uno:</p>
+<table>
+  <tr><th>Automatizado</th><th>Ejecución</th><th>Test Set</th><th>Test Execution</th></tr>
+  <tr><td>SI</td><td>Suite de pruebas automatizadas del equipo (Playwright, corrida por GitHub Actions)</td><td><span class="completar">&lt;TEST_SET_AUTO&gt;</span></td><td><span class="completar">&lt;TEST_EXEC_AUTO&gt;</span></td></tr>
+  <tr><td>NO</td><td>Manual (no automatizable o todavía no automatizado)</td><td><span class="completar">&lt;TEST_SET_MANUAL&gt;</span></td><td><span class="completar">&lt;TEST_EXEC_MANUAL&gt;</span></td></tr>
+</table>
+
+<!-- 3.1 FILTROS DE SELECCIÓN
+     Completar la búsqueda JQL que se usó para cada conjunto y cuántos tests devolvió.
+     Ejemplo de JQL: project = PROJ AND issuetype = Test AND labels in (login, carrito, checkout) AND "Regresión" = "Sí" AND "Automatizado" = "SI"
+     Para el conjunto manual, el mismo JQL con "Automatizado" = "NO". Los valores son Sí / No en el campo
+     Regresión (con tilde) y SI / NO en el campo Automatizado (mayúsculas, sin tilde). Las etiquetas salen
+     del catálogo de etiquetas. Los nombres de los campos dependen de la configuración de Jira de cada proyecto. -->
+<h3>3.1 Filtros de selección</h3>
+<table>
+  <tr><th>Conjunto</th><th>JQL</th><th>Tests</th></tr>
+  <tr><td>Automatizados</td><td><code>&lt;JQL_AUTO&gt;</code></td><td><span class="completar">&lt;CANT_AUTO&gt;</span></td></tr>
+  <tr><td>Manuales</td><td><code>&lt;JQL_MANUAL&gt;</code></td><td><span class="completar">&lt;CANT_MANUAL&gt;</span></td></tr>
+</table>
+
+<!-- 3.2 AMBIENTE
+     Ambiente donde se ejecuta la regresión: QA por defecto (PRE solo si el equipo lo indicó expresamente). Indicar la URL y la versión desplegada.
+     Ejemplo: "QA (https://qa.example.com), versión 2.4.0-rc1". Nunca se prueba en PROD. -->
+<h3>3.2 Ambiente</h3>
+<p><span class="completar">&lt;AMBIENTE&gt;</span></p>
+
+<!-- ======================================================================
+     4. CRITERIOS DE ENTRADA Y SALIDA
+     Texto base, igual para todos los equipos. No se edita salvo acuerdo del equipo.
+     Entrada: qué tiene que estar listo para empezar la regresión.
+     Salida: qué tiene que cumplirse para dar la regresión por aprobada.
+     ====================================================================== -->
+<h2>4. Criterios de Entrada y Salida</h2>
+<h3>4.1 Entrada</h3>
+<ul>
+  <li>Bugs bloqueantes del release resueltos.</li>
+  <li>Código del release desplegado en el ambiente de regresión.</li>
+  <li>Suite automatizada disponible y estable.</li>
+</ul>
+<h3>4.2 Salida</h3>
+<table>
+  <tr><th>Criterio</th><th>Métrica de aceptación</th></tr>
+  <tr><td>Criterios de aceptación validados</td><td>100 % de los CA verificados</td></tr>
+  <tr><td>Sin defectos críticos o altos abiertos</td><td>0 bugs Highest o High sin resolver</td></tr>
+  <tr><td>Cobertura de pruebas</td><td>80 % o más de los casos ejecutados</td></tr>
+  <tr><td>Regresión recomendada ejecutada</td><td>100 % de la regresión en PASS</td></tr>
+  <tr><td>Evidencia documentada</td><td>Link de evidencias en HU, Test Set y Test Execution</td></tr>
+  <tr><td>Defectos de severidad baja</td><td>Acordados con el PO y documentados</td></tr>
+</table>
+
+<!-- ======================================================================
+     5. DEFECTOS
+     5.1 es una lista dinámica: reemplazar <JQL_BUGS_RELEASE> por la búsqueda de bugs del release.
+     5.2 se completa a mano con los bugs que se decidió dejar para después, con acuerdo del PO.
+     5.3 es texto base: define cómo se escala cada severidad.
+     ====================================================================== -->
+<h2>5. Defectos</h2>
+<h3>5.1 Bugs del release</h3>
+<div class="dinamico">
+  <p>Lista dinámica de Jira (JQL):</p>
+  <p><code>&lt;JQL_BUGS_RELEASE&gt;</code></p>
+</div>
+<h3>5.2 Bugs diferidos acordados con el PO</h3>
+<!-- Una fila por bug diferido. Columnas: Bug (clave), Severidad, Movido a (sprint o release donde
+     se corregirá), Impacto (qué ve el usuario) y Acuerdo (quién lo aprobó y cuándo). -->
+<table>
+  <tr><th>Bug</th><th>Severidad</th><th>Movido a</th><th>Impacto</th><th>Acuerdo</th></tr>
+  <tr><td>Ninguno</td><td></td><td></td><td></td><td></td></tr>
+</table>
+<h3>5.3 Severidades y escalamiento</h3>
+<!-- Priority en Jira es el campo estándar de prioridad. BA es el analista funcional,
+     TL el Tech Lead y PO el Product Owner. -->
+<table>
+  <tr><th>Severidad</th><th>Priority en Jira</th><th>Acción</th><th>Impacto en la HU</th></tr>
+  <tr><td>Bloqueante</td><td>Highest</td><td>Comunicación inmediata a BA, TL y PO</td><td>La HU no avanza hasta la resolución</td></tr>
+  <tr><td>Alta</td><td>High</td><td>Escalamiento a BA y PO dentro de las 4 horas</td><td>Requiere corrección antes del cierre</td></tr>
+  <tr><td>Media</td><td>Medium</td><td>Se acuerda entre QA, BA y PO en la daily o el refinamiento</td><td>Puede diferirse con acuerdo documentado</td></tr>
+  <tr><td>Baja</td><td>Low / Lowest</td><td>Se registra y prioriza para un sprint futuro</td><td>No bloquea, con acuerdo del PO</td></tr>
+</table>
+
+<!-- ======================================================================
+     6. RIESGOS
+     Tabla viva: se actualiza durante toda la regresión. Una fila por riesgo.
+     Nivel: Alto, Medio o Bajo. Estado: Abierto, Mitigado, Materializado o Cerrado.
+     Si no hay riesgos, dejar una fila "Sin riesgos identificados al AAAA-MM-DD".
+     ====================================================================== -->
+<h2>6. Riesgos</h2>
+<table>
+  <tr><th>Nivel</th><th>Riesgo</th><th>Impacto</th><th>Mitigación</th><th>Estado</th></tr>
+  <tr><td>Alto</td><td>La ventana de regresión es de un solo día antes del release</td><td>Podrían quedar tests manuales sin ejecutar</td><td>Priorizar los flujos críticos (login y compra) y ejecutar la suite automatizada en paralelo</td><td>Abierto</td></tr>
+</table>
+<p class="nota">Nivel: Alto / Medio / Bajo. Estado: Abierto / Mitigado / Materializado / Cerrado.</p>
+
+<!-- ======================================================================
+     7. QA PARTICIPANTES
+     Una fila por integrante de QA y su rol en la regresión (por ejemplo ejecuta los
+     tests manuales, ejecuta la suite automatizada, responsable del informe).
+     ====================================================================== -->
+<h2>7. QA Participantes</h2>
+<table>
+  <tr><th>QA</th><th>Rol</th></tr>
+  <tr><td>Ana Prueba</td><td>Ejecuta los tests manuales y firma el veredicto</td></tr>
+</table>
+
+<!-- ======================================================================
+     8. EJECUCIONES
+     Lista dinámica de las Test Executions asociadas al plan. Reemplazar <TEST_PLAN_KEY>
+     por la clave del plan (por ejemplo PROJ-210).
+     ====================================================================== -->
+<h2>8. Ejecuciones</h2>
+<div class="dinamico">
+  <p>Lista dinámica de Jira (JQL):</p>
+  <p><code>issue in testPlanTestExecutions("&lt;TEST_PLAN_KEY&gt;") ORDER BY key ASC</code></p>
+</div>
+
+<!-- ======================================================================
+     9. MÉTRICAS
+     Durante la regresión, la columna "Ver en Jira" tiene la búsqueda que muestra el valor vivo.
+     Al cierre se completa la columna "Al cierre" con los números de la API de Xray
+     (reemplazar cada <RES_...> por el valor; al crear el plan, por la palabra "pendiente").
+     Pass rate = Passed / Ejecutados. Cobertura = Ejecutados / Total.
+     ====================================================================== -->
+<h2>9. Métricas</h2>
+<table>
+  <tr><th>Métrica</th><th>Qué cuenta</th><th>Ver en Jira (JQL)</th><th>Al cierre</th></tr>
+  <tr><td><strong>Tests del plan</strong></td><td>Tests agregados al plan</td><td><code>issue in testPlanTests("&lt;TEST_PLAN_KEY&gt;")</code></td><td><span class="completar">&lt;RES_TOTAL&gt;</span></td></tr>
+  <tr><td><strong>Passed</strong></td><td>Estado consolidado de cada test</td><td><code>issue in testPlanTests("&lt;TEST_PLAN_KEY&gt;", "PASSED")</code></td><td><span class="completar">&lt;RES_PASSED&gt;</span></td></tr>
+  <tr><td><strong>Failed</strong></td><td>Estado consolidado de cada test</td><td><code>issue in testPlanTests("&lt;TEST_PLAN_KEY&gt;", "FAILED")</code></td><td><span class="completar">&lt;RES_FAILED&gt;</span></td></tr>
+  <tr><td><strong>Blocked</strong></td><td>Tests bloqueados por dependencia o falta de datos</td><td><code>issue in testPlanTests("&lt;TEST_PLAN_KEY&gt;", "BLOCKED")</code></td><td><span class="completar">&lt;RES_BLOCKED&gt;</span></td></tr>
+  <tr><td><strong>No ejecutados</strong></td><td>Tests sin ejecución</td><td><code>issue in testPlanTests("&lt;TEST_PLAN_KEY&gt;", "TO DO")</code></td><td><span class="completar">&lt;RES_TODO&gt;</span></td></tr>
+  <tr><td><strong>Test Executions</strong></td><td>Ejecuciones asociadas al plan en Xray</td><td><code>issue in testPlanTestExecutions("&lt;TEST_PLAN_KEY&gt;")</code></td><td><span class="completar">&lt;RES_EXECUTIONS&gt;</span></td></tr>
+  <tr><td><strong>Test Sets</strong></td><td>Test Sets vinculados al plan</td><td><code>issue in linkedIssues("&lt;TEST_PLAN_KEY&gt;") AND issuetype = "Test Set"</code></td><td><span class="completar">&lt;RES_SETS&gt;</span></td></tr>
+  <tr><td><strong>Re-ejecuciones</strong></td><td>Test Executions con sufijo #2, #3. No suman a las métricas</td><td>API de Xray</td><td><span class="completar">&lt;RES_REEJECUCIONES&gt;</span></td></tr>
+  <tr><td><strong>Pass rate / Cobertura</strong></td><td>Pass rate = Passed / Ejecutados. Cobertura = Ejecutados / Total. Se calculan con la API de Xray</td><td>API de Xray</td><td><span class="completar">&lt;RES_PASS_RATE&gt;</span> / <span class="completar">&lt;RES_COBERTURA&gt;</span></td></tr>
+</table>
+<p class="nota">Durante la regresión, la columna "Ver en Jira" muestra los valores vivos. La columna "Al cierre" se completa con la API de Xray al generar el informe; los resultados de testPlanTests pueden diferir de los consolidados.</p>
+
+<!-- ======================================================================
+     10. EVIDENCIAS
+     Link a la carpeta de regresión del repositorio documental del equipo (SharePoint,
+     Drive u otro), por ejemplo evidencias/regresion-2.4/. Reemplazar el href y el texto.
+     ====================================================================== -->
+<h2>10. Evidencias</h2>
+<p><a href="#" class="completar">Evidencias de Regresión - &lt;EQUIPO&gt; &lt;RELEASE&gt; (repositorio documental)</a></p>
+
+<!-- ======================================================================
+     11. VEREDICTO DE RELEASE
+     Se completa al cierre (lo hace qa-informe-regresion). Escribir uno de estos tres valores
+     y una justificación breve con los números de la sección 9 (las reglas para elegirlo están en la skill qa-informe-regresion):
+       GO              - se cumplieron los criterios de salida; el release puede salir.
+       GO WITH RISKS   - hay riesgos o bugs diferidos aceptados por el PO; el release puede salir.
+       NO GO           - no se cumplieron los criterios de salida; el release no sale.
+     Al crear el plan, reemplazar el placeholder por la palabra "pendiente".
+     ====================================================================== -->
+<h2>11. Veredicto de Release</h2>
+<p class="veredicto"><span class="completar">&lt;VEREDICTO&gt;</span></p>
+
+</body>
+</html>
